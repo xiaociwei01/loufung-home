@@ -551,6 +551,8 @@ html, body { overflow-x: hidden !important; }
   var blackKeysEl = document.getElementById('blackKeys');
   var pianoEl = document.getElementById('piano');
 
+  var limiter = new Tone.Limiter(-1).toDestination();
+  var eq = new Tone.EQ3({ low: 4, mid: 0, high: 4 }).connect(limiter);
   var sampler = new Tone.Sampler({
     urls: {
       'A0':'A0.mp3','C1':'C1.mp3','D#1':'Ds1.mp3','F#1':'Fs1.mp3',
@@ -564,7 +566,7 @@ html, body { overflow-x: hidden !important; }
     },
     release: 1,
     baseUrl: 'https://tonejs.github.io/audio/salamander/'
-  }).toDestination();
+  }).connect(limiter);
 
   var midiToWhiteIdx = {};
   var NUM_MAP = { 'C': '1', 'D': '2', 'E': '3', 'F': '4', 'G': '5', 'A': '6', 'B': '7' };
@@ -657,9 +659,10 @@ html, body { overflow-x: hidden !important; }
   });
 
   volumeEl.addEventListener('input', function(){
-    sampler.volume.value = Tone.gainToDb(parseInt(this.value) / 100);
+    var v = parseInt(this.value);
+    sampler.volume.value = v === 0 ? -Infinity : Tone.gainToDb(v / 50);
   });
-  sampler.volume.value = Tone.gainToDb(0.7);
+  sampler.volume.value = 9;
 
   // 键盘映射
   var KEY_MAP = {
