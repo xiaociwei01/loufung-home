@@ -1,0 +1,61 @@
+.scroll-progress {
+  position: fixed; top: 0; left: 0;
+  width: 0; height: 2px;
+  background: linear-gradient(90deg, #4d6bfe, #6b84ff);
+  z-index: 9999;
+}
+.hero-orb {
+  position: fixed; top: 15%; right: -10%;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(77, 107, 254, 0.20) 0%, transparent 65%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orbFloat 30s linear infinite;
+}
+.hero-orb-2 {
+  position: fixed; bottom: 20%; left: -15%;
+  width: 420px; height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 130, 100, 0.16) 0%, transparent 65%);
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orbFloat 40s linear infinite reverse;
+}
+@keyframes orbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-60px, 40px) scale(1.15); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.work-card {
+  transform-style: preserve-3d;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* 顶栏：DeepSeek 风格悬浮胶囊 */
+.header {
+  position: fixed !important;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 880px;
+  padding: 10px 22px !important;
+  margin: 0 !important;
+  border-bottom: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  transition: box-shadow 0.3s, background 0.3s;
+}
+body { padding-top: 90px; }
+@media (max-width: 600px) {
+  .header { padding: 8px 16px !important; top: 12px; width: calc(100% - 24px); }
+  body { padding-top: 76px; }
+}
