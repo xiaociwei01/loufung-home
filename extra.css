@@ -117,3 +117,123 @@ body { padding-top: 72px; }
   }
   body { padding-top: 66px; }
 }
+
+/* ===== 联系板块 · 二维码 ===== */
+.contact-qr { cursor: pointer; }
+.contact-qr:hover .contact-value { color: var(--accent-light); }
+
+.qr-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: pointer;
+}
+.qr-modal.show {
+  display: flex;
+  animation: qrFadeIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes qrFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.qr-inner {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 28px 20px;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: qrScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
+}
+@keyframes qrScaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.qr-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin-bottom: 18px;
+  letter-spacing: 0.02em;
+}
+.qr-img {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
+}
+.qr-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 600px) {
+  .qr-inner { padding: 22px 22px 16px; max-width: 280px; }
+  .qr-title { font-size: 14px; margin-bottom: 14px; }
+  .qr-img { max-width: 240px; }
+  .qr-hint { margin-top: 12px; font-size: 11px; }
+}
+
+/* ===== 联系板块 · 列表样式 ===== */
+.contact-block {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--card-border);
+  margin-top: 8px;
+  margin-bottom: 60px;
+}
+.contact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--card-border);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-base);
+  position: relative;
+  cursor: pointer;
+}
+.contact-item::before {
+  content: '';
+  position: absolute;
+  left: -12px; top: 50%;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: translateY(-50%) scale(0.5);
+  transition: all var(--transition-base);
+}
+.contact-item:hover { padding-left: 16px; }
+.contact-item:hover::before {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+.contact-label {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a0a0a;
+  letter-spacing: 0.01em;
+}
+.contact-value {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  font-weight: 300;
+  transition: color var(--transition-base);
+}
+.contact-item:hover .contact-value { color: var(--accent-light); }

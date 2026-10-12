@@ -39,3 +39,42 @@
   updateGreeting();
   setInterval(updateGreeting, 60 * 1000);
 })();
+
+// ===== 二维码弹窗 =====
+(function(){
+  var modal = document.getElementById('qrModal');
+  var titleEl = document.getElementById('qrTitle');
+  var imgEl = document.getElementById('qrImg');
+  if (!modal || !titleEl || !imgEl) return;
+
+  document.querySelectorAll('.contact-qr').forEach(function(item){
+    item.addEventListener('click', function(){
+      var qr = item.dataset.qr;
+      var name = item.dataset.name || '';
+      titleEl.textContent = name;
+      imgEl.src = './' + qr;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  function closeQR() {
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  modal.addEventListener('click', function(e){
+    // 点遮罩关闭，点 inner 不关
+    if (e.target === modal) closeQR();
+  });
+
+  // 点 inner 里的空白也关（除了图本身）
+  modal.querySelector('.qr-inner').addEventListener('click', function(e){
+    if (e.target.tagName !== 'IMG') closeQR();
+  });
+
+  // ESC 关闭
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeQR();
+  });
+})();

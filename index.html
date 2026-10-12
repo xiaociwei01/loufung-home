@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="./style.css?v=6">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-<link rel="stylesheet" href="./extra.css?v=13"><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<link rel="stylesheet" href="./extra.css?v=16"><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦔</text></svg>">
 </head>
 <body>
@@ -80,6 +80,38 @@
       <div class="work-desc">所有项目的源代码，都在这里。</div>
     </a>
 
+  </div>
+
+  <div class="section-label reveal">联系</div>
+  <div class="contact-block">
+    <a class="contact-item" href="https://github.com/xiaociwei01" target="_blank" rel="noopener">
+      <span class="contact-label">GitHub</span>
+      <span class="contact-value">@xiaociwei01</span>
+    </a>
+    <a class="contact-item" href="mailto:xiaolu200808@gmail.com">
+      <span class="contact-label">邮箱</span>
+      <span class="contact-value">xiaolu200808@gmail.com</span>
+    </a>
+    <a class="contact-item" href="mailto:2586279833@qq.com">
+      <span class="contact-label">邮箱</span>
+      <span class="contact-value">2586279833@qq.com</span>
+    </a>
+    <div class="contact-item contact-qr" data-qr="wechat-qr.png" data-name="微信">
+      <span class="contact-label">微信</span>
+      <span class="contact-value">点击查看二维码 →</span>
+    </div>
+    <div class="contact-item contact-qr" data-qr="qq-qr.png" data-name="QQ">
+      <span class="contact-label">QQ</span>
+      <span class="contact-value">点击查看二维码 →</span>
+    </div>
+  </div>
+
+  <div class="qr-modal" id="qrModal">
+    <div class="qr-inner">
+      <div class="qr-title" id="qrTitle">微信</div>
+      <img class="qr-img" id="qrImg" src="" alt="二维码">
+      <div class="qr-hint">点击任意处关闭</div>
+    </div>
   </div>
 
   <div class="footer">
@@ -148,5 +180,5 @@ function initGSAP() {
 setTimeout(initGSAP, 300);
 </script>
 
-<script src="./extra.js?v=5"></script></body>
+<script src="./extra.js?v=7"></script></body>
 </html>
