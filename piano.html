@@ -487,6 +487,25 @@ html, body { overflow-x: hidden !important; }
   white-space: nowrap;
 }
 
+
+/* ===== 歌词显示 ===== */
+.lyrics-bar {
+  text-align: center;
+  font-size: clamp(14px, 2.2vmin, 18px);
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  padding: 6px 20px 2px;
+  min-height: 28px;
+  transition: opacity 0.25s ease;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  max-width: 92%;
+  margin: 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lyrics-bar:empty { display: none; }
 </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
 </head>
@@ -514,6 +533,8 @@ html, body { overflow-x: hidden !important; }
 <div class="piano-stage">
   <div class="stage-top">
     <div class="now-playing idle" id="nowPlaying">点击琴键演奏</div>
+    <div class="score-bar" id="scoreBar"></div>
+    <div class="lyrics-bar" id="lyricsBar"></div>
     <div class="melodies" id="melodies">
       <button class="melody-btn" data-melody="twinkle">小星星</button>
       <button class="melody-btn" data-melody="birthday">生日快乐</button>
@@ -716,11 +737,113 @@ html, body { overflow-x: hidden !important; }
   var melodyTimer = null;
   var melodyToken = 0;
 
+  // ===== 简谱进度条 =====
+  var JP_NUM = {'C':'1','D':'2','E':'3','F':'4','G':'5','A':'6','B':'7'};
+  function renderScore(key) {
+    var bar = document.getElementById('scoreBar');
+    if (!bar) return;
+    var notes = MELODIES[key];
+    if (!notes) { bar.innerHTML = ''; return; }
+    var html = '';
+    for (var i = 0; i < notes.length; i++) {
+      var note = notes[i][0];
+      var pitch = note[0];
+      var oct = parseInt(note.slice(1), 10);
+      var num = JP_NUM[pitch] || '?';
+      var cls = 'score-note';
+      if (oct >= 5) cls += ' high';
+      else if (oct <= 3) cls += ' low';
+      html += '<span class="' + cls + '" data-idx="' + i + '">' + num + '</span>';
+    }
+    bar.innerHTML = html;
+  }
+  function highlightScore(idx) {
+    var bar = document.getElementById('scoreBar');
+    if (!bar) return;
+    var nodes = bar.querySelectorAll('.score-note');
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].classList.remove('active');
+      if (i < idx) nodes[i].classList.add('passed');
+      else nodes[i].classList.remove('passed');
+    }
+    var cur = nodes[idx];
+    if (cur) {
+      cur.classList.add('active');
+      var target = cur.offsetLeft - bar.clientWidth / 2 + cur.offsetWidth / 2;
+      bar.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+    }
+  }
+  // ===== 歌词数据（键 = 歌名，值 = [[音符索引, 歌词], ...]）=====
+  // ===== 每首歌的 BPM =====
+  var MELODY_BPM = {
+    'twinkle':  120,
+    'birthday': 100,
+    'tiger':    120,
+    'ode':      100,
+  };
+
+  var LYRICS = {
+  };
+
+  var currentLyrics = null;
+
+  function renderLyrics(key) {
+    var bar = document.getElementById('lyricsBar');
+    if (!bar) return;
+    var lyr = LYRICS[key];
+    if (!lyr || !lyr.length) {
+      bar.textContent = '';
+      currentLyrics = null;
+      return;
+    }
+    currentLyrics = lyr;
+    bar.textContent = lyr[0][1] || '';
+  }
+
+  function updateLyrics(idx) {
+    if (!currentLyrics) return;
+    var bar = document.getElementById('lyricsBar');
+    if (!bar) return;
+    var text = '';
+    for (var i = 0; i < currentLyrics.length; i++) {
+      if (currentLyrics[i][0] <= idx) text = currentLyrics[i][1];
+      else break;
+    }
+    if (bar.textContent !== text) {
+      bar.style.opacity = '0.4';
+      setTimeout(function(){
+        bar.textContent = text;
+        bar.style.opacity = '1';
+      }, 100);
+    }
+  }
+
+  function clearLyrics() {
+    var bar = document.getElementById('lyricsBar');
+    if (!bar) return;
+    bar.textContent = '';
+    currentLyrics = null;
+  }
+
+  function clearScore() {
+    var bar = document.getElementById('scoreBar');
+    if (!bar) return;
+    var nodes = bar.querySelectorAll('.score-note');
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].classList.remove('active');
+      nodes[i].classList.remove('passed');
+    }
+    bar.scrollTo({ left: 0, behavior: 'smooth' });
+  }
+
   function playMelody(key) {
     var notes = MELODIES[key];
     if (!notes) return;
     melodyToken++;
     var myToken = melodyToken;
+    if (MELODY_BPM[key]) Tone.Transport.bpm.value = MELODY_BPM[key];
+    renderScore(key);
+    renderLyrics(key);
 
     var btn = document.querySelector('[data-melody="' + key + '"]');
     document.querySelectorAll('.melody-btn').forEach(function(b){ b.classList.remove('playing'); });
@@ -733,6 +856,8 @@ html, body { overflow-x: hidden !important; }
       if (myToken !== melodyToken) return;
       if (idx >= notes.length) {
         clearTimeout(melodyTimer);
+        clearScore();
+        clearLyrics();
         if (btn) btn.classList.remove('playing');
         if (nowPlayingEl) {
           nowPlayingEl.classList.add('idle');
@@ -741,6 +866,8 @@ html, body { overflow-x: hidden !important; }
         }
         return;
       }
+      highlightScore(idx);
+      updateLyrics(idx);
       var item = notes[idx];
       var note = item[0], dur = item[1];
       sampler.triggerAttackRelease(note, dur);
@@ -847,3 +974,71 @@ html, body { overflow-x: hidden !important; }
 
 </body>
 </html>
+<style>
+/* ===== 简谱进度条 ===== */
+.score-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  max-width: 92%;
+  margin: 0 auto;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.score-bar::-webkit-scrollbar { display: none; }
+.score-bar:empty { display: none; }
+.score-note {
+  font-size: clamp(14px, 2.2vmin, 18px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 22px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: color 0.12s, transform 0.12s;
+  user-select: none;
+}
+.score-note.high::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+.score-note.low::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+.score-note.passed { color: rgba(255, 255, 255, 0.18); }
+.score-note.active {
+  color: #6b84ff;
+  transform: scale(1.45);
+  text-shadow: 0 0 12px rgba(107, 132, 255, 0.7);
+}
+.score-note.active.high::before,
+.score-note.active.low::after {
+  background: #6b84ff;
+  opacity: 1;
+}
+</style>
