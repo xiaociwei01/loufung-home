@@ -18,7 +18,7 @@
 | 页面 | 地址 |
 |---|---|
 | 主页 | https://loufung.cn |
-| 钢琴 | https://loufung.cn/piano.html |
+| 钢琴 | https://piano.loufung.cn |
 
 ### 技术栈
 
@@ -67,7 +67,7 @@ Pure static, no framework, no build step. Runs on a self-hosted server.
 | Page | URL |
 |---|---|
 | Home | https://loufung.cn |
-| Piano | https://loufung.cn/piano.html |
+| Piano | https://piano.loufung.cn |
 
 ### Stack
 
