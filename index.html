@@ -17,21 +17,24 @@
 <link rel="stylesheet" href="./style.css?v=6">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-<link rel="stylesheet" href="./extra.css?v=3"><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<link rel="stylesheet" href="./extra.css?v=13"><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="liquid-lens" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" result="noise" />
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="60" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
 
 <div class="bg-glow"></div>
 
 <div class="container">
 
   <header class="header">
-    <div class="header-left">
-      <div class="logo">Lou<span>Fung</span></div>
-    </div>
-    <div class="header-right">
-      <a href="https://github.com/xiaociwei01" target="_blank">GitHub</a>
-    </div>
+    <div class="logo">Lou<span>Fung</span></div>
+    <div class="greeting" id="greeting">祝你早安</div>
   </header>
 
   <section class="hero">
@@ -45,7 +48,7 @@
 
   <div class="section-label reveal">关于</div>
   <div class="about-block">
-    <p class="about-text">用一部旧手机，构建一些安静的小东西。<br>不追热度，只做想做的。</p>
+    <p class="about-text">旧手机何必吃灰<br>也可以是你的小型服务器</p>
     <div class="about-stats">
       <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">作品</div></div>
       <div class="stat-item"><div class="stat-num">4个月</div><div class="stat-label">写代码</div></div>
@@ -143,5 +146,5 @@ function initGSAP() {
 setTimeout(initGSAP, 300);
 </script>
 
-<script src="./extra.js?v=2"></script></body>
+<script src="./extra.js?v=5"></script></body>
 </html>
