@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turnstile 测试</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+body { font-family: -apple-system, sans-serif; background: #f7f8fa; color: #0a0a0a; padding: 60px 20px; text-align: center; }
+h1 { font-size: 24px; margin-bottom: 30px; }
+#result { margin-top: 30px; font-size: 14px; color: #666; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<h1>Turnstile 加载测试</h1>
+
+<div class="cf-turnstile" 
+     data-sitekey="0x4AAAAAAFT99dRmjVqNci40"
+     data-theme="light"
+     data-callback="onSuccess"
+     data-error-callback="onError"></div>
+
+<div id="result">等待验证…</div>
+
+<script>
+function onSuccess(token) {
+    document.getElementById('result').textContent = '⏳ 后端验证中…';
+    fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('result').textContent = '✅ 后端验证通过！这是真人。';
+        } else {
+            document.getElementById('result').textContent = '❌ 后端拒绝：' + JSON.stringify(data['error-codes'] || data);
+        }
+    })
+    .catch(e => {
+        document.getElementById('result').textContent = '❌ 请求失败：' + e.message;
+    });
+}
+function onError(code) {
+    document.getElementById('result').textContent = '❌ 失败，错误码：' + code;
+}
+</script>
+
+</body>
+</html>
