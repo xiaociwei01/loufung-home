@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LouFung · Piano</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, 'PingFang SC', 'Inter', sans-serif;
+  background: #0a0a0f;
+  user-select: none;
+  color: #fff;
+}
+body { display: flex; flex-direction: column; }
+
+.top-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.back-link {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: #6b84ff; }
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+.volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+}
+.volume-wrap input {
+  width: 70px;
+  accent-color: #4d6bfe;
+}
+.status {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  padding: 8px 20px 0;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* 键盘容器 */
+.piano-stage {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 0 30px;
+}
+.piano-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 40px;
+}
+.piano-scroll::-webkit-scrollbar { height: 4px; }
+.piano-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+.piano {
+  position: relative;
+  display: inline-block;
+  height: 220px;
+  user-select: none;
+}
+.white-keys {
+  display: flex;
+  height: 100%;
+  gap: 1px;
+}
+.key {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.06s, transform 0.06s;
+  position: relative;
+}
+.white {
+  width: 32px;
+  height: 100%;
+  background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+  border-radius: 0 0 4px 4px;
+  box-shadow:
+    0 2px 3px rgba(0,0,0,0.35),
+    inset 0 -1px 0 rgba(0,0,0,0.08);
+}
+.white.active {
+  background: linear-gradient(180deg, #b8c4ff 0%, #8fa0ff 100%);
+  transform: translateY(1px);
+  box-shadow:
+    0 0 0 rgba(0,0,0,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.08);
+}
+.black-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 62%;
+  pointer-events: none;
+}
+.black {
+  position: absolute;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(180deg, #2a2a35 0%, #08080d 100%);
+  border-radius: 0 0 3px 3px;
+  box-shadow:
+    0 3px 5px rgba(0,0,0,0.55),
+    inset 0 -2px 0 rgba(255,255,255,0.05);
+  pointer-events: auto;
+  z-index: 2;
+}
+.black.active {
+  background: linear-gradient(180deg, #4d6bfe 0%, #2a45c8 100%);
+  transform: translateY(1px);
+}
+
+/* 横屏：取消横向滚动，白键平分屏幕宽度 */
+
+
+/* 竖屏布局：演奏区 + 钢琴垂直居中 */
+
+
+
+/* 最近弹的音符 */
+.now-playing {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #fff 0%, #6b84ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  min-height: 90px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+}
+.now-playing.idle {
+  color: rgba(255,255,255,0.15);
+  -webkit-text-fill-color: rgba(255,255,255,0.15);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+}
+
+/* 内置旋律 */
+.melodies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.melody-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.melody-btn:hover {
+  color: #fff;
+  border-color: #4d6bfe;
+  background: rgba(77,107,254,0.15);
+}
+.melody-btn:active { transform: scale(0.95); }
+.melody-btn.playing {
+  background: #4d6bfe;
+  color: #fff;
+  border-color: #4d6bfe;
+}
+
+
+/* 手机横屏专用适配（屏幕高度小） */
+
+
+/* 极矮屏（手机横屏带浏览器地址栏） */
+
+
+/* 平板横屏（iPad 等）保持原样 */
+
+
+
+.fullscreen-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  line-height: 1;
+  margin-left: 10px;
+}
+.fullscreen-btn:hover {
+  color: #fff;
+  border-color: #4d6bfe;
+  background: rgba(77,107,254,0.15);
+}
+
+/* 挖孔屏/刘海屏安全区适配 */
+@supports (padding: env(safe-area-inset-left)) {
+  .top-bar {
+    padding-left: max(14px, env(safe-area-inset-left)) !important;
+    padding-right: max(14px, env(safe-area-inset-right)) !important;
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+  }
+  .piano-scroll {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+  .status {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+}
+
+/* 全屏 + 横屏时，左侧给挖孔留足够空间 */
+
+
+/* 手机横屏更激进：左右各留 50px */
+
+
+
+/* ===== 大屏横屏（平板/电脑）：完整 88 键 ===== */
+
+
+
+/* ===== 全屏幕统一：上下布局 ===== */
+.piano-stage {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+.stage-top {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 18px 20px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex: none !important;
+}
+.piano-scroll {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.now-playing {
+  font-size: 48px !important;
+  min-height: 58px !important;
+}
+
+
+
+/* ============================================================
+   统一响应式 · 用 vmin/vh/clamp 自动适配所有屏幕
+   不需要任何媒体查询，横竖屏、手机平板电脑全部等比缩放
+   ============================================================ */
+html, body { overflow-x: hidden !important; }
+
+/* 顶栏 */
+.top-bar {
+  padding: clamp(8px, 1.5vmin, 14px) clamp(16px, 3vmin, 24px) !important;
+  flex-shrink: 0;
+}
+.back-link { font-size: clamp(12px, 1.6vmin, 14px) !important; }
+.title { font-size: clamp(12px, 1.6vmin, 14px) !important; }
+.volume-wrap {
+  font-size: clamp(11px, 1.4vmin, 13px) !important;
+  gap: clamp(4px, 0.8vmin, 8px) !important;
+}
+.volume-wrap input { width: clamp(56px, 8vmin, 80px) !important; }
+.fullscreen-btn {
+  font-size: clamp(14px, 1.8vmin, 16px) !important;
+  padding: clamp(3px, 0.6vmin, 6px) clamp(8px, 1.2vmin, 12px) !important;
+}
+
+/* 状态提示 */
+.status {
+  padding: clamp(4px, 0.8vmin, 8px) clamp(16px, 3vmin, 24px) 0 !important;
+  font-size: clamp(10px, 1.3vmin, 12px) !important;
+  min-height: 16px;
+}
+
+/* 主舞台：垂直布局，从上到下 */
+.piano-stage {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  min-height: 0;
+}
+
+/* 上半区（音符 + 按钮） */
+.stage-top {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: clamp(10px, 2vmin, 22px) !important;
+  padding: clamp(14px, 3vh, 36px) clamp(16px, 4vw, 40px) clamp(10px, 2vh, 24px) !important;
+  flex: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 当前音符 */
+.now-playing {
+  font-size: clamp(38px, 9vmin, 76px) !important;
+  min-height: clamp(46px, 11vmin, 90px) !important;
+  line-height: 1 !important;
+}
+.now-playing.idle {
+  font-size: clamp(12px, 1.8vmin, 15px) !important;
+}
+
+/* 旋律按钮 */
+.melodies {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: clamp(6px, 1.5vmin, 12px) !important;
+  justify-content: center !important;
+}
+.melody-btn {
+  font-size: clamp(11px, 1.6vmin, 14px) !important;
+  padding: clamp(6px, 1.2vmin, 10px) clamp(12px, 2.2vmin, 22px) !important;
+}
+
+/* 钢琴滚动区 */
+.piano-scroll {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: clamp(6px, 1vh, 12px) clamp(16px, 3vw, 40px) clamp(16px, 3vh, 32px) !important;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 !important;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.piano-scroll::-webkit-scrollbar { height: 4px; }
+.piano-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+
+/* 钢琴本体 · margin auto 让它居中（宽度溢出时自动左对齐可滑） */
+.piano {
+  flex-shrink: 0;
+  margin: 0 auto !important;
+  height: clamp(140px, 34vh, 280px) !important;
+  position: relative;
+  display: inline-block;
+}
+
+/* 白键 */
+.white-keys {
+  display: flex;
+  height: 100%;
+  gap: 1px;
+}
+.white {
+  width: clamp(22px, 4.2vmin, 38px) !important;
+  height: 100% !important;
+  flex: none !important;
+}
+.black {
+  width: clamp(14px, 2.6vmin, 22px) !important;
+}
+
+
+/* ===== 简谱数字标签 ===== */
+.white { position: relative; }
+.note-num {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(11px, 1.8vmin, 16px);
+  font-weight: 700;
+  font-family: 'Inter', -apple-system, sans-serif;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+  z-index: 3;
+  transition: opacity 0.2s;
+}
+/* 不同八度用不同颜色 */
+.white[data-oct="0"] .note-num { color: rgba(56, 189, 248, 0.85); }   /* 低音 · 天蓝 */
+.white[data-oct="1"] .note-num { color: rgba(34, 197, 94, 0.85); }    /* 中低 · 绿 */
+.white[data-oct="2"] .note-num { color: rgba(77, 107, 254, 0.95); }   /* 中音 · 蓝（C4 区） */
+.white[data-oct="3"] .note-num { color: rgba(168, 85, 247, 0.9); }    /* 中高 · 紫 */
+.white[data-oct="4"] .note-num .note-num,
+.white[data-oct="4"] .note-num { color: rgba(236, 72, 153, 0.9); }    /* 高音 · 粉 */
+.white[data-oct="5"] .note-num { color: rgba(249, 115, 22, 0.85); }   /* 更高 · 橙 */
+.white[data-oct="6"] .note-num { color: rgba(220, 38, 38, 0.85); }    /* 极高 · 红 */
+.white.active .note-num { color: #fff !important; }
+
+
+/* ===== 顶部提示条 ===== */
+.tip-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(77, 107, 254, 0.12);
+  border-bottom: 1px solid rgba(77, 107, 254, 0.25);
+  font-size: clamp(11px, 1.5vmin, 13px);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+  position: relative;
+}
+.tip-bar .tip-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.tip-bar .tip-text { flex: 1; }
+.tip-bar .tip-close {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.tip-bar .tip-close:hover {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+.tip-bar.hidden { display: none; }
+
+
+.tip-status {
+  display: inline-block;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(77,107,254,0.35);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.92em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a class="back-link" href="/">← 返回</a>
+  <span class="title">Piano · LouFung</span>
+  <div class="volume-wrap">
+    <span>🔊</span>
+    <input type="range" id="volume" min="0" max="100" value="70">
+    <button class="fullscreen-btn" id="fullscreenBtn" title="全屏">⛶</button>
+  </div>
+</div>
+
+<div class="tip-bar" id="tipBar">
+  <span class="tip-icon">💡</span>
+  <span class="tip-text">
+    <strong>手机横屏体验最佳</strong> · 平板/电脑横竖屏均可 · 点右上角 <strong>⛶</strong> 进入全屏
+    <span class="tip-status" id="status">⏳ 加载音源中…</span>
+  </span>
+  <button class="tip-close" id="tipClose" title="关闭提示">✕</button>
+</div>
+
+<div class="piano-stage">
+  <div class="stage-top">
+    <div class="now-playing idle" id="nowPlaying">点击琴键演奏</div>
+    <div class="melodies" id="melodies">
+      <button class="melody-btn" data-melody="twinkle">小星星</button>
+      <button class="melody-btn" data-melody="birthday">生日快乐</button>
+      <button class="melody-btn" data-melody="tiger">两只老虎</button>
+      <button class="melody-btn" data-melody="ode">欢乐颂</button>
+    </div>
+  </div>
+  <div class="piano-scroll">
+    <div class="piano" id="piano">
+      <div class="white-keys" id="whiteKeys"></div>
+      <div class="black-layer" id="blackKeys"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  var BLACK_SET = {1:1, 3:1, 6:1, 8:1, 10:1};
+  var START_MIDI = 21;
+  var END_MIDI = 108;
+  function isSmallScreen() { return window.innerHeight < 500; }
+  function getRange() {
+    return isSmallScreen() ? {start: 48, end: 83} : {start: 21, end: 108};
+  }
+
+  function midiToNote(m) {
+    return NOTES[m % 12] + (Math.floor(m / 12) - 1);
+  }
+  function isBlack(m) { return BLACK_SET[m % 12]; }
+
+  var statusEl = document.getElementById('status');
+  var volumeEl = document.getElementById('volume');
+  var whiteKeysEl = document.getElementById('whiteKeys');
+  var blackKeysEl = document.getElementById('blackKeys');
+  var pianoEl = document.getElementById('piano');
+
+  var sampler = new Tone.Sampler({
+    urls: {
+      'A0':'A0.mp3','C1':'C1.mp3','D#1':'Ds1.mp3','F#1':'Fs1.mp3',
+      'A1':'A1.mp3','C2':'C2.mp3','D#2':'Ds2.mp3','F#2':'Fs2.mp3',
+      'A2':'A2.mp3','C3':'C3.mp3','D#3':'Ds3.mp3','F#3':'Fs3.mp3',
+      'A3':'A3.mp3','C4':'C4.mp3','D#4':'Ds4.mp3','F#4':'Fs4.mp3',
+      'A4':'A4.mp3','C5':'C5.mp3','D#5':'Ds5.mp3','F#5':'Fs5.mp3',
+      'A5':'A5.mp3','C6':'C6.mp3','D#6':'Ds6.mp3','F#6':'Fs6.mp3',
+      'A6':'A6.mp3','C7':'C7.mp3','D#7':'Ds7.mp3','F#7':'Fs7.mp3',
+      'A7':'A7.mp3','C8':'C8.mp3'
+    },
+    release: 1,
+    baseUrl: 'https://tonejs.github.io/audio/salamander/'
+  }).toDestination();
+
+  var midiToWhiteIdx = {};
+  var NUM_MAP = { 'C': '1', 'D': '2', 'E': '3', 'F': '4', 'G': '5', 'A': '6', 'B': '7' };
+
+  function buildWhiteKeys() {
+    whiteKeysEl.innerHTML = '';
+    midiToWhiteIdx = {};
+    var whiteIdx = 0;
+    var range = getRange();
+    for (var m = range.start; m <= range.end; m++) {
+      if (isBlack(m)) continue;
+      var note = midiToNote(m);
+      var pitchName = note[0];
+      var octave = parseInt(note.slice(1), 10);
+      var num = NUM_MAP[pitchName] || '';
+
+      var btn = document.createElement('button');
+      btn.className = 'key white';
+      btn.dataset.note = note;
+      btn.dataset.midi = m;
+      btn.dataset.oct = octave;
+
+      if (num) {
+        var span = document.createElement('span');
+        span.className = 'note-num';
+        span.textContent = num;
+        btn.appendChild(span);
+      }
+
+      whiteKeysEl.appendChild(btn);
+      midiToWhiteIdx[m] = whiteIdx;
+      whiteIdx++;
+    }
+  }
+  buildWhiteKeys();
+
+  // 布局黑键
+  function layoutBlack() {
+    blackKeysEl.innerHTML = '';
+    var firstWhite = whiteKeysEl.querySelector('.white');
+    if (!firstWhite) return;
+    var whiteW = firstWhite.offsetWidth;
+    var gap = 1;
+    var isSmall = window.innerWidth <= 600;
+    var blackW = isSmall ? 16 : 20;
+
+    var range = getRange();
+    for (var m = range.start; m <= range.end; m++) {
+      if (!isBlack(m)) continue;
+      var prev = m - 1;
+      while (prev > range.start && isBlack(prev)) prev--;
+      var idx = midiToWhiteIdx[prev];
+      if (idx === undefined) continue;
+      var btn = document.createElement('button');
+      btn.className = 'key black';
+      btn.dataset.note = midiToNote(m);
+      btn.dataset.midi = m;
+      btn.style.width = blackW + 'px';
+      var left = (idx + 1) * (whiteW + gap) - blackW / 2;
+      btn.style.left = left + 'px';
+      blackKeysEl.appendChild(btn);
+    }
+  }
+
+  var nowPlayingEl = document.getElementById('nowPlaying');
+  var idleTimer = null;
+  function playNote(note, el, duration) {
+    if (Tone.context.state !== 'running') Tone.start();
+    sampler.triggerAttackRelease(note, duration || '8n');
+    if (el) {
+      el.classList.add('active');
+      setTimeout(function(){ el.classList.remove('active'); }, 140);
+    }
+    if (nowPlayingEl) {
+      nowPlayingEl.classList.remove('idle');
+      nowPlayingEl.textContent = note;
+      nowPlayingEl.style.opacity = '1';
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(function(){
+        nowPlayingEl.style.opacity = '0.3';
+      }, 1200);
+    }
+  }
+
+  pianoEl.addEventListener('pointerdown', function(e){
+    var t = e.target.closest('.key');
+    if (!t) return;
+    e.preventDefault();
+    playNote(t.dataset.note, t);
+  });
+
+  volumeEl.addEventListener('input', function(){
+    sampler.volume.value = Tone.gainToDb(parseInt(this.value) / 100);
+  });
+  sampler.volume.value = Tone.gainToDb(0.7);
+
+  // 键盘映射
+  var KEY_MAP = {
+    'a':'C4','w':'C#4','s':'D4','e':'D#4','d':'E4','f':'F4','t':'F#4',
+    'g':'G4','y':'G#4','h':'A4','u':'A#4','j':'B4','k':'C5','o':'C#5',
+    'l':'D5','p':'D#5',';':'E5',"'":'F5'
+  };
+  var pressed = {};
+  document.addEventListener('keydown', function(e){
+    var k = e.key.toLowerCase();
+    if (pressed[k]) return;
+    pressed[k] = true;
+    var note = KEY_MAP[k];
+    if (!note) return;
+    e.preventDefault();
+    var el = pianoEl.querySelector('[data-note="' + note + '"]');
+    playNote(note, el);
+  });
+  document.addEventListener('keyup', function(e){
+    pressed[e.key.toLowerCase()] = false;
+  });
+
+  // ===== 内置旋律 =====
+  var MELODIES = {
+    twinkle: [
+      ['C4','4n'],['C4','4n'],['G4','4n'],['G4','4n'],
+      ['A4','4n'],['A4','4n'],['G4','2n'],
+      ['F4','4n'],['F4','4n'],['E4','4n'],['E4','4n'],
+      ['D4','4n'],['D4','4n'],['C4','2n']
+    ],
+    birthday: [
+      ['G4','8n'],['G4','8n'],['A4','4n'],['G4','4n'],
+      ['C5','4n'],['B4','2n'],
+      ['G4','8n'],['G4','8n'],['A4','4n'],['G4','4n'],
+      ['D5','4n'],['C5','2n']
+    ],
+    tiger: [
+      ['C4','4n'],['D4','4n'],['E4','4n'],['C4','4n'],
+      ['C4','4n'],['D4','4n'],['E4','4n'],['C4','4n'],
+      ['E4','4n'],['F4','4n'],['G4','2n'],
+      ['E4','4n'],['F4','4n'],['G4','2n']
+    ],
+    ode: [
+      ['E4','4n'],['E4','4n'],['F4','4n'],['G4','4n'],
+      ['G4','4n'],['F4','4n'],['E4','4n'],['D4','4n'],
+      ['C4','4n'],['C4','4n'],['D4','4n'],['E4','4n'],
+      ['E4','2n'],['D4','4n'],['D4','2n']
+    ]
+  };
+
+  var melodyTimer = null;
+  var melodyToken = 0;
+
+  function playMelody(key) {
+    var notes = MELODIES[key];
+    if (!notes) return;
+    melodyToken++;
+    var myToken = melodyToken;
+
+    var btn = document.querySelector('[data-melody="' + key + '"]');
+    document.querySelectorAll('.melody-btn').forEach(function(b){ b.classList.remove('playing'); });
+    if (btn) btn.classList.add('playing');
+
+    var idx = 0;
+    var totalSeconds = 0;
+
+    function step() {
+      if (myToken !== melodyToken) return;
+      if (idx >= notes.length) {
+        clearTimeout(melodyTimer);
+        if (btn) btn.classList.remove('playing');
+        if (nowPlayingEl) {
+          nowPlayingEl.classList.add('idle');
+          nowPlayingEl.textContent = '点击琴键演奏';
+          nowPlayingEl.style.opacity = '1';
+        }
+        return;
+      }
+      var item = notes[idx];
+      var note = item[0], dur = item[1];
+      sampler.triggerAttackRelease(note, dur);
+
+      var el = pianoEl.querySelector('[data-note="' + note + '"]');
+      if (el) {
+        el.classList.add('active');
+        setTimeout(function(){ el.classList.remove('active'); }, 140);
+      }
+      if (nowPlayingEl) {
+        nowPlayingEl.classList.remove('idle');
+        nowPlayingEl.textContent = note;
+        nowPlayingEl.style.opacity = '1';
+      }
+
+      var seconds = Tone.Time(dur).toSeconds();
+      totalSeconds += seconds;
+      idx++;
+      melodyTimer = setTimeout(step, seconds * 1000);
+    }
+
+    clearTimeout(melodyTimer);
+    step();
+  }
+
+  document.getElementById('melodies').addEventListener('click', function(e){
+    var btn = e.target.closest('.melody-btn');
+    if (!btn) return;
+    if (btn.classList.contains('playing')) {
+      melodyToken++;
+      clearTimeout(melodyTimer);
+      btn.classList.remove('playing');
+      return;
+    }
+    playMelody(btn.dataset.melody);
+  });
+
+  Tone.loaded().then(function(){
+    statusEl.textContent = '✅ 就绪';
+    layoutBlack();
+    setTimeout(function(){
+      var c4 = pianoEl.querySelector('[data-note="C4"]');
+      if (c4) c4.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+    }, 300);
+  });
+
+  var lastSmall = isSmallScreen();
+  var rt;
+  function rebuild() {
+    var now = isSmallScreen();
+    if (now !== lastSmall) {
+      lastSmall = now;
+      buildWhiteKeys();
+    }
+    layoutBlack();
+    setTimeout(function(){
+      var el = pianoEl.querySelector('[data-note="C4"]') || pianoEl.querySelector('[data-note="C3"]');
+      if (el) el.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+    }, 200);
+  }
+  window.addEventListener('resize', function(){
+    clearTimeout(rt);
+    rt = setTimeout(rebuild, 200);
+  });
+  window.matchMedia('(orientation: landscape)').addEventListener('change', function(){
+    clearTimeout(rt);
+    rt = setTimeout(rebuild, 300);
+  });
+
+  // 全屏切换
+  document.getElementById('fullscreenBtn').addEventListener('click', function(){
+    var el = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  });
+  document.addEventListener('fullscreenchange', function(){
+    setTimeout(rebuild, 100);
+  });
+  document.addEventListener('webkitfullscreenchange', function(){
+    setTimeout(rebuild, 100);
+  });
+
+  // 提示条关闭逻辑
+  (function(){
+    var tipBar = document.getElementById('tipBar');
+    var tipClose = document.getElementById('tipClose');
+    if (!tipBar || !tipClose) return;
+    if (localStorage.getItem('piano_tip_closed') === '1') {
+      tipBar.classList.add('hidden');
+    }
+    tipClose.addEventListener('click', function(){
+      tipBar.classList.add('hidden');
+      localStorage.setItem('piano_tip_closed', '1');
+    });
+  })();
+
+})();
+</script>
+
+</body>
+</html>

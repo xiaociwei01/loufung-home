@@ -317,3 +317,14 @@ body {
   .about-stats { gap: 20px; }
   .section-label { margin-top: 56px; }
 }
+
+/* 卡片里的"由 XX 建议"标注 */
+.work-byline {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--card-border);
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
