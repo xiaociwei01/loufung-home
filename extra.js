@@ -78,3 +78,38 @@
     if (e.key === 'Escape') closeQR();
   });
 })();
+
+// ===== 运行时长显示 =====
+(function(){
+  var el = document.getElementById('uptimeLine');
+  if (!el) return;
+  var startedAt = null;
+
+  function fmt(ms) {
+    var s = Math.floor(ms / 1000);
+    var d = Math.floor(s / 86400);
+    var h = Math.floor((s % 86400) / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var sec = s % 60;
+    var parts = [];
+    if (d > 0) parts.push(d + ' 天');
+    if (h > 0 || d > 0) parts.push(h + ' 小时');
+    if (m > 0 || h > 0 || d > 0) parts.push(m + ' 分钟');
+    parts.push(sec + ' 秒');
+    return parts.join(' ');
+  }
+
+  function tick() {
+    if (startedAt === null) return;
+    el.textContent = '该站点已运行 ' + fmt(Date.now() - startedAt);
+  }
+
+  fetch('/api/uptime', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      startedAt = d.startedAt;
+      tick();
+      setInterval(tick, 1000);
+    })
+    .catch(function(){});
+})();

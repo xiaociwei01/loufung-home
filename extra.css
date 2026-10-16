@@ -237,3 +237,16 @@ body { padding-top: 72px; }
   transition: color var(--transition-base);
 }
 .contact-item:hover .contact-value { color: var(--accent-light); }
+
+/* ===== 运行时长显示 ===== */
+.uptime-line {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+.uptime-line:empty { display: none; }
