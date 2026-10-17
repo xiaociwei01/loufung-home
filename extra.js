@@ -1,115 +1,39 @@
-// 光晕
-(function(){
-  var o1 = document.createElement('div'); o1.className = 'hero-orb'; document.body.appendChild(o1);
-  var o2 = document.createElement('div'); o2.className = 'hero-orb-2'; document.body.appendChild(o2);
-})();
+// 问候语
+(function(){function u(){var el=document.getElementById('greeting');if(!el)return;var h=new Date().getHours(),g;if(h>=5&&h<11)g='祝你早安';else if(h>=11&&h<18)g='祝你午安';else g='祝你晚安';if(el.textContent!==g){el.style.opacity='0';setTimeout(function(){el.textContent=g;el.style.opacity='1';},200);}}u();setInterval(u,60000);})();
 
-// 卡片 3D 倾斜
-(function(){
-  document.querySelectorAll('.work-card').forEach(function(card){
-    card.addEventListener('mousemove', function(e){
-      var r = card.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width - 0.5;
-      var y = (e.clientY - r.top) / r.height - 0.5;
-      card.style.transform = 'perspective(800px) rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 8) + 'deg) translateY(-3px)';
-    });
-    card.addEventListener('mouseleave', function(){ card.style.transform = ''; });
-  });
-})();
+// 运行时间
+(function(){var el=document.getElementById('uptimeLine');if(!el)return;var st=null;function f(ms){var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60;var p=[];if(d>0)p.push(d+' 天');if(h>0||d>0)p.push(h+' 小时');if(m>0||h>0||d>0)p.push(m+' 分钟');p.push(sec+' 秒');return p.join(' ');}function t(){if(st!==null)el.textContent='该站点已运行 '+f(Date.now()-st);}fetch('/api/uptime',{cache:'no-store'}).then(r=>r.json()).then(d=>{st=d.startedAt;t();setInterval(t,1000);}).catch(e=>{});})();
 
-// 问候语定时切换（早/午/晚安）
-(function(){
-  function updateGreeting() {
-    var el = document.getElementById('greeting');
-    if (!el) return;
-    var h = new Date().getHours();
-    var g;
-    if (h >= 5 && h < 11)       g = '祝你早安';
-    else if (h >= 11 && h < 18) g = '祝你午安';
-    else                        g = '祝你晚安';
-    if (el.textContent !== g) {
-      el.style.transition = 'opacity 0.4s';
-      el.style.opacity = '0';
-      setTimeout(function(){
-        el.textContent = g;
-        el.style.opacity = '1';
-      }, 200);
-    }
-  }
-  updateGreeting();
-  setInterval(updateGreeting, 60 * 1000);
-})();
+// 二维码
+(function(){var m=document.getElementById('qrModal'),t=document.getElementById('qrTitle'),i=document.getElementById('qrImg');if(!m||!t||!i)return;document.querySelectorAll('.contact-qr').forEach(function(el){el.addEventListener('click',function(){t.textContent=el.dataset.name||'';i.src='./'+el.dataset.qr;m.classList.add('show');document.body.style.overflow='hidden';});});function c(){m.classList.remove('show');document.body.style.overflow='';}m.addEventListener('click',function(e){if(e.target===m)c();});m.querySelector('.qr-inner').addEventListener('click',function(e){if(e.target.tagName!=='IMG')c();});document.addEventListener('keydown',function(e){if(e.key==='Escape')c();});})();
 
-// ===== 二维码弹窗 =====
+// 核心：渲染 + GSAP 动画
 (function(){
-  var modal = document.getElementById('qrModal');
-  var titleEl = document.getElementById('qrTitle');
-  var imgEl = document.getElementById('qrImg');
-  if (!modal || !titleEl || !imgEl) return;
-
-  document.querySelectorAll('.contact-qr').forEach(function(item){
-    item.addEventListener('click', function(){
-      var qr = item.dataset.qr;
-      var name = item.dataset.name || '';
-      titleEl.textContent = name;
-      imgEl.src = './' + qr;
-      modal.classList.add('show');
-      document.body.style.overflow = 'hidden';
+function animate(){
+  if(typeof gsap==='undefined'||typeof ScrollTrigger==='undefined'){setTimeout(animate,200);return;}
+  gsap.registerPlugin(ScrollTrigger);
+  
+  document.querySelectorAll('.work-card.reveal').forEach(function(el,i){
+    var fromX=i%2===0?-60:60;
+    gsap.fromTo(el,{opacity:0,x:fromX,y:40},{
+      opacity:1,x:0,y:0,duration:1.0,ease:'power4.out',
+      scrollTrigger:{trigger:el,start:'top 95%',end:'top 50%',scrub:1.0,toggleActions:'play reverse play reverse'}
     });
   });
-
-  function closeQR() {
-    modal.classList.remove('show');
-    document.body.style.overflow = '';
-  }
-
-  modal.addEventListener('click', function(e){
-    // 点遮罩关闭，点 inner 不关
-    if (e.target === modal) closeQR();
+  
+  document.querySelectorAll('.section-label.reveal').forEach(function(el){
+    gsap.fromTo(el,{opacity:0,y:30},{opacity:1,y:0,duration:0.8,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play reverse play reverse'}});
   });
+  ScrollTrigger.refresh();
+}
 
-  // 点 inner 里的空白也关（除了图本身）
-  modal.querySelector('.qr-inner').addEventListener('click', function(e){
-    if (e.target.tagName !== 'IMG') closeQR();
-  });
-
-  // ESC 关闭
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') closeQR();
-  });
-})();
-
-// ===== 运行时长显示 =====
-(function(){
-  var el = document.getElementById('uptimeLine');
-  if (!el) return;
-  var startedAt = null;
-
-  function fmt(ms) {
-    var s = Math.floor(ms / 1000);
-    var d = Math.floor(s / 86400);
-    var h = Math.floor((s % 86400) / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    var sec = s % 60;
-    var parts = [];
-    if (d > 0) parts.push(d + ' 天');
-    if (h > 0 || d > 0) parts.push(h + ' 小时');
-    if (m > 0 || h > 0 || d > 0) parts.push(m + ' 分钟');
-    parts.push(sec + ' 秒');
-    return parts.join(' ');
+fetch('/api/config',{cache:'no-store'}).then(r=>r.json()).then(c=>{
+  if(document.getElementById('noticeText')&&c.notice!=null)document.getElementById('noticeText').innerHTML=c.notice;
+  if(document.getElementById('userAbout')&&c.about!=null)document.getElementById('userAbout').innerHTML=c.about;
+  
+  if(document.getElementById('worksGrid')&&Array.isArray(c.cards)){
+    document.getElementById('worksGrid').innerHTML=c.cards.filter(x=>x.visible!==false).map(x=>`<a class="work-card reveal" href="${x.link||'#'}" target="_blank" rel="noopener"><div class="work-category">${x.category}</div><div class="work-name">${x.name}</div><div class="work-desc">${x.desc}</div>${x.byline?`<div class="work-byline">${x.byline}</div>`:''}</a>`).join('');
   }
-
-  function tick() {
-    if (startedAt === null) return;
-    el.textContent = '该站点已运行 ' + fmt(Date.now() - startedAt);
-  }
-
-  fetch('/api/uptime', { cache: 'no-store' })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      startedAt = d.startedAt;
-      tick();
-      setInterval(tick, 1000);
-    })
-    .catch(function(){});
+  setTimeout(animate, 50);
+}).catch(e=>console.warn('接口拉取失败', e));
 })();

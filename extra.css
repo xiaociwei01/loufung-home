@@ -250,3 +250,45 @@ body { padding-top: 72px; }
   transition: opacity 0.3s;
 }
 .uptime-line:empty { display: none; }
+
+/* ===== 双排毛玻璃顶栏 ===== */
+body { padding-top: 116px !important; }
+.header {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  padding: 12px 22px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+.header-top { display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; }
+.header-bottom { display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; }
+.header .logo, .header .greeting { font-size: 13px !important; font-weight: 600 !important; color: #0a0a0a !important; text-shadow: none !important; }
+.header .logo span { color: #4d6bfe !important; }
+.notice-text { font-size: 12px !important; color: #4a4a4a !important; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 600px) {
+  body { padding-top: 104px !important; }
+  .header { top: 10px; left: 12px; right: 12px; padding: 10px 16px !important; gap: 4px !important; }
+  .header .logo, .header .greeting { font-size: 12px !important; }
+  .notice-text { font-size: 11px !important; }
+}
+.header-top { justify-content: center !important; gap: 14px !important; }
+.header-top { justify-content: center !important; gap: 8px !important; }
+.header-top .logo, .header-top .greeting { flex: none !important; }
+
+/* ===== 修复关于区域巨大留白，自适应高度 ===== */
+.about-block {
+  min-height: auto !important;
+  height: auto !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  margin-bottom: 20px !important;
+}
+.about-text {
+  margin: 16px 0 !important;
+  line-height: 1.8 !important;
+}
